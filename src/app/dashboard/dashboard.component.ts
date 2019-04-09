@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Title } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 
 import { Book } from 'app/models/book';
 import { Reader } from 'app/models/reader';
 import { DataService } from 'app/core/data.service';
 import { createEmptyStateSnapshot } from '@angular/router/src/router_state';
+import { BookTrackerError } from 'app/models/bookTrackerError';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,15 +21,17 @@ export class DashboardComponent implements OnInit {
   mostPopularBook: Book;
 
   constructor(private dataService: DataService,
-              private title: Title) { }
+              private title: Title,
+              private router: ActivatedRoute) { }
 
   ngOnInit() {
-    this.dataService.getAllBooks()
-      .subscribe(
-         (data: Book[]) => this.allBooks = data,
-         (err: any) => console.log(err),
-         () => console.log('All done getting books.')
-      );
+    const resolvedData: Book[] | BookTrackerError = this.router.snapshot.data['resolvedBooks'];
+
+    if (resolvedData instanceof BookTrackerError) {
+      console.log(`Dashboard component error: ${resolvedData.friendlyMessage}`);
+    } else {
+      this.allBooks = resolvedData;
+    }
     this.allReaders = this.dataService.getAllReaders();
     this.mostPopularBook = this.dataService.mostPopularBook;
 
